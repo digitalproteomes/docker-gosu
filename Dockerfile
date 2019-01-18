@@ -19,7 +19,9 @@ ENV DEBIAN_FRONTEND noninteractive
 ## Initial password for user will be 123
 ENV GOSU_VERSION 1.9
 RUN set -x \
-    && apt-get update && apt-get install -y --no-install-recommends ca-certificates wget && rm -rf /var/lib/apt/lists/* \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates wget gnupg \
+    && rm -rf /var/lib/apt/lists/* \
     && dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')" \
     && wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch" \
     && wget -O /usr/local/bin/gosu.asc "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch.asc" \
@@ -28,15 +30,16 @@ RUN set -x \
     && gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu \
     && rm -r "$GNUPGHOME" /usr/local/bin/gosu.asc \
     && chmod +x /usr/local/bin/gosu \
-    && gosu nobody tru
+    && gosu nobody true
 
+# Create user user
 ENV USER_ID 1000
 ENV GROUP_ID 1000
-RUN addgroup --gid $GROUP_ID userg
-RUN useradd --shell /bin/bash -u $USER_ID -g $GROUP_ID -o -c "" -m user
 ENV HOME /home/user
-RUN chown -R user:userg $HOME
-RUN echo 'user:123' | chpasswd
+RUN addgroup --gid $GROUP_ID userg \
+    && useradd --shell /bin/bash -u $USER_ID -g $GROUP_ID -o -c "" -m user \
+    && chown -R user:userg $HOME \
+    && echo 'user:123' | chpasswd
 
 ## Make sure the user inside the docker has the same ID as the user outside
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
