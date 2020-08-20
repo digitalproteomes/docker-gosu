@@ -17,11 +17,11 @@ ENV DEBIAN_FRONTEND noninteractive
 ##
 ## Initial password for user will be 123
 ENV GOSU_VERSION=1.9
-SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
+SHELL ["/bin/bash", "-eo", "pipefail", "-c"]
 RUN set -x \
     && apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates=20180409 \
-       wget=1.19.4-1ubuntu2.1 \
+       wget=1.19.4-1ubuntu2.2 \
        gnupg=2.2.4-1ubuntu1.2 \
     && mkdir ~/.gnupg \
     && echo "disable-ipv6" >> ~/.gnupg/dirmngr.conf \
@@ -41,7 +41,7 @@ RUN set -x \
 ENV USER_ID 1000
 ENV GROUP_ID 1000
 ENV HOME /home/user
-SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
+SHELL ["/bin/bash", "-eo", "pipefail", "-c"]
 RUN addgroup --gid $GROUP_ID userg \
     && useradd --shell /bin/bash -u $USER_ID -g $GROUP_ID -o -c "" -m user \
     && chown -R user:userg $HOME \
