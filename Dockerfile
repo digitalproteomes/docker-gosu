@@ -1,7 +1,6 @@
 FROM ubuntu:18.04
 
-MAINTAINER Patrick Pedrioli
-LABEL Description="A base container for user matching between host-image" Version="1.0"
+LABEL maintainer="Patrick Pedrioli" description="A base container for user matching between host-image" version="1.0"
 
 ## Let apt-get know we are running in noninteractive mode
 ENV DEBIAN_FRONTEND noninteractive
@@ -17,17 +16,21 @@ ENV DEBIAN_FRONTEND noninteractive
 ## (e.g. docker run -e LOCAL_USER_ID=151149 ....)
 ##
 ## Initial password for user will be 123
-ENV GOSU_VERSION 1.9
+ENV GOSU_VERSION=1.9
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 RUN set -x \
     && apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates wget gnupg \
+    && apt-get install -y --no-install-recommends ca-certificates=20180409 \
+       wget=1.19.4-1ubuntu2.1 \
+       gnupg=2.2.4-1ubuntu1.2 \
     && mkdir ~/.gnupg \
     && echo "disable-ipv6" >> ~/.gnupg/dirmngr.conf \
     && rm -rf /var/lib/apt/lists/* \
     && dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')" \
     && wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch" \
     && wget -O /usr/local/bin/gosu.asc "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch.asc" \
-    && export GNUPGHOME="$(mktemp -d)" \
+    && GNUPGHOME="$(mktemp -d)" \
+    && export GNUPGHOME \
     && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 \
     && gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu \
     && rm -r "$GNUPGHOME" /usr/local/bin/gosu.asc \
@@ -38,6 +41,7 @@ RUN set -x \
 ENV USER_ID 1000
 ENV GROUP_ID 1000
 ENV HOME /home/user
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 RUN addgroup --gid $GROUP_ID userg \
     && useradd --shell /bin/bash -u $USER_ID -g $GROUP_ID -o -c "" -m user \
     && chown -R user:userg $HOME \
@@ -47,4 +51,3 @@ RUN addgroup --gid $GROUP_ID userg \
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod 755 /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-
